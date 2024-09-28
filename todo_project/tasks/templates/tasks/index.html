@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .container {
+            max-width: 600px;
+        }
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Task Manager</h1>
+        
+        <div class="input-group mb-3">
+            <input id="task-title" type="text" class="form-control" placeholder="Task Title">
+            <input id="task-description" type="text" class="form-control" placeholder="Task Description">
+            <div class="input-group-append">
+                <button class="btn btn-primary" onclick="createTask()">Add Task</button>
+            </div>
+        </div>
+
+        <div id="tasks-container">
+            <!-- Tasks will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <script>
+        // Function to load tasks from the API
+        function loadTasks() {
+            fetch('/api/tasks/')
+                .then(response => response.json())
+                .then(tasks => {
+                    const tasksContainer = document.getElementById('tasks-container');
+                    tasksContainer.innerHTML = '';  // Clear the container
+                    
+                    tasks.forEach(task => {
+                        const taskElement = document.createElement('div');
+                        taskElement.className = 'task-item' + (task.completed ? ' completed' : '');
+                        taskElement.innerHTML = `
+                            <div>
+                                <strong>${task.title}</strong><br>
+                                <small>${task.description}</small>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-success" onclick="toggleComplete(${task.id}, ${task.completed})">✔️</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteTask(${task.id})">❌</button>
+                            </div>
+                        `;
+                        tasksContainer.appendChild(taskElement);
+                    });
+                });
+        }
+
+        // Function to create a new task
+        function createTask() {
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+
+            if (title.trim() === '') {
+                alert('Task title is required');
+                return;
+            }
+
+            fetch('/api/tasks/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, description, completed: false })
+            })
+            .then(response => response.json())
+            .then(task => {
+                loadTasks();  // Reload the tasks
+                document.getElementById('task-title').value = '';
+                document.getElementById('task-description').value = '';
+            });
+        }
+
+        // Function to delete a task
+        function deleteTask(id) {
+            fetch(`/api/tasks/${id}/`, {
+                method: 'DELETE'
+            })
+            .then(() => loadTasks());  // Reload the tasks
+        }
+
+        // Function to toggle task completion
+        function toggleComplete(id, completed) {
+            fetch(`/api/tasks/${id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ completed: !completed })
+            })
+            .then(() => loadTasks());  // Reload the tasks
+        }
+
+        // Load tasks when the page loads
+        document.addEventListener('DOMContentLoaded', loadTasks);
+    </script>
+</body>
+</html>
