@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app  # Mapeia o diretório atual para /app no contêiner
+    environment:
+      - DEBUG=True  # Ativa o modo de debug
+      - DATABASE_URL=postgres://user:password@db/mydatabase  # URL de conexão do banco de dados
+    depends_on:
+      - db  # Garante que o serviço db seja iniciado antes do web
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: mydatabase  # Nome do banco de dados a ser criado
+      POSTGRES_USER: user  # Nome do usuário
+      POSTGRES_PASSWORD: password  # Senha do usuário
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persistência de dados
+
+volumes:
+  postgres_data:  # Volume para armazenamento persistente do banco de dados
